@@ -1,0 +1,174 @@
+;; This "home-environment" file can be passed to 'guix home reconfigure'
+;; to reproduce the content of your profile.  This is "symbolic": it only
+;; specifies package names.  To reproduce the exact same profile, you also
+;; need to capture the channels being used, as returned by "guix describe".
+;; See the "Replicating Guix" section in the manual.
+
+(use-modules
+ ;; gnu
+ (gnu packages)
+ (gnu services)
+ (gnu packages gnupg)
+ (gnu packages linux)
+ (gnu packages music)
+ (gnu packages agda)
+ ;;guix
+ (guix gexp)
+ (guix channels)
+ (guix scripts import elpa)
+ (guix build emacs-build-system)
+ (guix import elpa)
+ ;; home
+ (gnu home)
+ ;; module to extend it for profiles
+ ((gnu home services guix)
+  #:select (home-channels-service-type))
+ ((gnu home)
+  #:select (home-environment))
+ ((gnu services)
+  #:select (simple-service))
+ ((guix channels)
+  #:select (channel
+            make-channel-introduction
+            openpgp-fingerprint))
+ ;;module to find dotfiles
+ (guix git)
+ (guix gexp)
+ ;; refer to dotfiles
+ (define %dot-files 
+  (git-checkout
+    (url "my.git.repo.git")
+    (commit "123456")))
+
+ (define %xameer-dot-file (file-append %dot-files "/xameer-dot-file"))
+ 
+ (gnu home services)
+ (gnu home-services emacs)
+ (gnu home services shells)
+ (gnu home services gnupg)
+ (gnu home services ssh)
+ ;;rrr
+ (rrr packages web-browsers)
+ (rrr packages emacs)
+ ;; rde
+ (rde packages web-browsers)
+ (rde features)
+ (rde home services emacs)
+ (rde home services web-browsers)
+ (rde home services emacs-xyz)
+ ;; emacs
+ (emacs build-system melpa)
+ (emacs build melpa-build-system)
+ (emacs import melpa)
+ (emacs packages melpa)
+ )
+
+(home-environment
+
+ (packages
+  (specifications->packages
+   (list		             
+    "emacs-guix"
+    ;;"emacs-mastodon-alt"
+    "git"
+    "git:send-email"
+    "python-pip"
+    "nyxt"
+    "guile-hall"
+    "gcc-toolchain"
+    "rrdtool"
+    "sendmail"
+    "smtpmail"
+    "emacs-agda2-mode"
+    ;;"emacs-config-general-mode"
+    ;;"emacs-config-parser"
+    "rust"
+    "rust:cargo"
+    "openssh"
+    )))
+
+  ;; Below is the list of Home services.  To search for available
+  ;; services, run 'guix home search KEYWORD' in a terminal.
+  (services
+   (list
+    (service home-bash-service-type
+             (home-bash-configuration
+	      (guix-defaults? #t)
+              (aliases '(("grep" . "grep --color=auto") ("ll" . "ls -l")
+                         ("ls" . "ls -p --color=auto")))
+              (bashrc (list (local-file
+                             "/home/dev/src/guix-config//.bashrc"
+                             "bashrc")))
+              (bash-profile (list (plain-file "bash-profile" "\
+export HISTFILE=$XDG_CACHE_HOME/.bash_history")))
+	      )
+	     )
+    (service home-openssh-service-type
+         (home-openssh-configuration
+          (hosts
+           (list (openssh-host (name "ci.guix.gnu.org")
+                               (user "dev"))
+                 (openssh-host (name "dev")
+                               (host-name "dev.example.org")
+                               (user "dev")
+                               (port 10022))))
+          (authorized-keys (list (local-file "id_rsa.pub")))))
+    (service home-gpg-agent-service-type
+         (home-gpg-agent-configuration
+          (pinentry-program
+           (file-append pinentry-emacs "/bin/pinentry-emacs"))
+          (ssh-support? #t)))
+    (simple-service 'tmux-service
+                    home-xdg-configuration-files-service-type
+                    `(("tmux/tmux.conf" ,(local-file "tmux/tmux.conf"))))
+    (simple-service 'git-service
+                    home-xdg-configuration-files-service-type
+                    `(("git/gitconfig" ,(local-file "git/gitconfig"))))
+    (simple-service 'nyxt-service
+                    home-xdg-configuration-files-service-type
+                    `(("nyxt/config.lisp" ,(local-file "nyxt/config.lisp"))))
+    (simple-service 'emacs-config-service
+                    home-xdg-configuration-files-service-type
+                    `(("emacs/init.el" ,(local-file "emacs/init.el"))
+                      ("emacs/early-init.el" ,(local-file
+                                               "emacs/early-init.el"))
+		      ))
+    		      ))
+     (simple-service
+      'guix-channel-service
+      home-channels-service-type
+      (list
+       (channel
+	(name 'guix)
+        (url "https://git.savannah.gnu.org/git/guix.git")
+        (branch "master")
+        (introduction
+         (make-channel-introduction
+          "9edb3f66fd807b096b48283debdcddccfea34bad"
+          (openpgp-fingerprint
+           "BBB0 2DDF 2CEA F6A8 0D1D  E643 A2A0 6DF2 A33A 54FA")
+	  )))))
+
+     (simple-service
+      'oni-channel-service
+      home-channels-service-type
+      (list
+       (channel
+        (name 'oni)
+        (url "https://code.ryuslash.org/ryuslash/guix-packages.git")
+        (introduction
+         (make-channel-introduction
+          "646573578b7adfbff415645fed201269076cebf6"
+          (openpgp-fingerprint
+           "061C C5C4 D936 C9A8 AECC  1A17 7D5C 407B 4350 25C1"))))))    
+;; (simple-service 'guixrus-service
+;;                 home-channels-service-type
+;;                 (list
+;;                  (channel
+;;                   (name 'guixrus)
+;;                   (url "https://git.sr.ht/~whereiseveryone/guixrus"))))
+
+
+	 )
+   )
+  )

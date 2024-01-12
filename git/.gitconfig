@@ -1,0 +1,10 @@
+[core]
+	excludesfile = /home/dev/.gitignore_global
+[user]
+	signingkey = 1FB20D8EE8067117
+	name = carnotweat
+	email = jasitis@gmail.com
+[commit]
+	gpgsign = true
+[gpg]
+	program = ~/src/guix-config/gpg/gpg-pinentry-loopback
